@@ -2,17 +2,17 @@
 #include <OneWire.h>
 #include <GyverButton.h>
 #include <EEManager.h>
-#include  <../lib/GyverTimer/GyverTimer.h>
+#include <../lib/GyverTimer/GyverTimer.h>
 
 #define ds18Pin 2
 #define heaterPin 10
 #define compressorPin 12
 
-#define HEAT_DURATION 1800000L // 30 minuts
-#define HEAT_PERIOD 259200000L // 3 days
-
 #define ONE_DAY 86400000L
 #define ONE_HOUR 3600000L
+
+#define NEXT_DEFROST_TIMER 2 * 86400000L // 2 суток
+#define DEFROST_DURATION_TIMER 3600000L // 1 час
 
 OneWire ds(ds18Pin);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -47,8 +47,8 @@ void initTimers()
 {
   timer1.setInterval(750);
   updateLcdTimer.setInterval(1000);
-  heaterPeriodTimer.setTimeout(HEAT_PERIOD);
-  heaterDurationTimer.setTimeout(HEAT_DURATION);
+  heaterPeriodTimer.setTimeout(NEXT_DEFROST_TIMER);
+  heaterDurationTimer.setTimeout(DEFROST_DURATION_TIMER);
   heaterDurationTimer.stop();
 }
 
@@ -64,13 +64,13 @@ void updateRestTimeLcd()
   if (heaterPeriodTimer.isEnabled()) {
       lcd.print(F("Holod: "));
       lcd.print(timeNormalize(heaterPeriodTimer.restTime(), ONE_DAY));
-      lcd.print(F(" / D"));
+      lcd.print(F(" D"));
   }
 
   if (heaterDurationTimer.isEnabled()) {
       lcd.print(F("Ottaika: "));
       lcd.print(timeNormalize(heaterDurationTimer.restTime(), ONE_HOUR));
-      lcd.print(F(" / H"));
+      lcd.print(F(" H"));
   }
 }
 
@@ -94,8 +94,8 @@ void setup()
   pinMode(heaterPin, OUTPUT);
   pinMode(compressorPin, OUTPUT);
 
-  digitalWrite(heaterPin, LOW);
-  digitalWrite(compressorPin, HIGH);
+  digitalWrite(heaterPin, HIGH);
+  digitalWrite(compressorPin, HIGH); // на одном реле подключено к NC на другом к NO
 
   initTimers();
 
@@ -112,7 +112,7 @@ void loop()
   {
     heaterPeriodTimer.stop();
     heaterDurationTimer.start();
-    digitalWrite(heaterPin, HIGH);
+    digitalWrite(heaterPin, LOW);
     digitalWrite(compressorPin, LOW);
   }
 
@@ -122,7 +122,7 @@ void loop()
     {
       heaterDurationTimer.stop();
       heaterPeriodTimer.start();
-      digitalWrite(heaterPin, LOW);
+      digitalWrite(heaterPin, HIGH);
       digitalWrite(compressorPin, HIGH);
     }
   }
