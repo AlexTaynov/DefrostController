@@ -11,8 +11,8 @@
 #define ONE_DAY 86400000L
 #define ONE_HOUR 3600000L
 
-#define NEXT_DEFROST_TIMER 2 * 86400000L // 2 суток
-#define DEFROST_DURATION_TIMER 3600000L // 1 час
+#define NEXT_DEFROST_TIMER 3 * 86400000L // 3 суток
+#define DEFROST_DURATION_TIMER 1800000L // 0.5 час
 
 OneWire ds(ds18Pin);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
