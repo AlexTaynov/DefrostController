@@ -7,12 +7,13 @@
 #define ds18Pin 2
 #define heaterPin 10
 #define compressorPin 12
+#define buttonPinDec 6
 
 #define ONE_DAY 86400000L
 #define ONE_HOUR 3600000L
 
 #define NEXT_DEFROST_TIMER 3 * 86400000L // 3 суток
-#define DEFROST_DURATION_TIMER 1800000L // 0.5 час
+#define DEFROST_DURATION_TIMER 2700000L  // 0.75 час
 
 OneWire ds(ds18Pin);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -20,6 +21,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 GTimer updateLcdTimer;
 GTimer heaterPeriodTimer;
 GTimer heaterDurationTimer;
+GButton but2(buttonPinDec);
 
 GTimer timer1;
 int getTemp()
@@ -52,8 +54,9 @@ void initTimers()
   heaterDurationTimer.stop();
 }
 
-float timeNormalize(uint32_t time, float base) {
-    return floor((time / base) * 100) / 100;
+float timeNormalize(uint32_t time, float base)
+{
+  return floor((time / base) * 100) / 100;
 }
 
 void updateRestTimeLcd()
@@ -61,16 +64,18 @@ void updateRestTimeLcd()
   lcd.setCursor(0, 1);
   lcd.print(F("                "));
   lcd.setCursor(0, 1);
-  if (heaterPeriodTimer.isEnabled()) {
-      lcd.print(F("Holod: "));
-      lcd.print(timeNormalize(heaterPeriodTimer.restTime(), ONE_DAY));
-      lcd.print(F(" D"));
+  if (heaterPeriodTimer.isEnabled())
+  {
+    lcd.print(F("Holod: "));
+    lcd.print(timeNormalize(heaterPeriodTimer.restTime(), ONE_DAY));
+    lcd.print(F(" D"));
   }
 
-  if (heaterDurationTimer.isEnabled()) {
-      lcd.print(F("Ottaika: "));
-      lcd.print(timeNormalize(heaterDurationTimer.restTime(), ONE_HOUR));
-      lcd.print(F(" H"));
+  if (heaterDurationTimer.isEnabled())
+  {
+    lcd.print(F("Ottaika: "));
+    lcd.print(timeNormalize(heaterDurationTimer.restTime(), ONE_HOUR));
+    lcd.print(F(" H"));
   }
 }
 
@@ -105,6 +110,16 @@ void setup()
 
 void loop()
 {
+  but2.tick();
+
+  if (but2.isClick())
+  {
+    heaterPeriodTimer.stop();
+    heaterDurationTimer.start();
+    digitalWrite(heaterPin, LOW);
+    digitalWrite(compressorPin, LOW);
+  }
+
   if (updateLcdTimer.isReady())
     updateLcd(getTemp());
 
